@@ -22,7 +22,7 @@ namespace aLib
         /// Работа с путями.
         /// </summary>
         public class Paths
-        {
+        { 
             /// <summary>
             /// Возвращает строку, длина которой равна MaxLength.
             /// </summary>

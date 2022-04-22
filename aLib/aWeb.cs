@@ -9,6 +9,8 @@ using System.Linq;
 using System.Net.Cache;
 
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using RestSharp; // рекомендуемая версия: 106.13.0
 
 #endregion
 
@@ -19,6 +21,56 @@ namespace aLib
     /// </summary>
     public class aWeb
     {
+        /// <summary>
+        /// Реализация RestAPI обращений.
+        /// </summary>
+        public class RestAPI
+        {
+            /// <summary>
+            /// Основной домен запроса.
+            /// </summary>
+            public string Domain = default;
+
+            /// <summary>
+            /// Конструктор класса.
+            /// </summary>
+            /// <param name="Domain">Основной домен запроса с вложенными (если есть) роутами без параметров.</param>
+            public RestAPI(string Domain = null) => this.Domain = Domain;
+
+            /// <summary>
+            /// Запрос к серверу с возможными параметрами <paramref name="RequestParameters"/> и телом запроса <paramref name="RequestBody"/> в случае POST запроса.
+            /// </summary>
+            /// <param name="RequestMethod">Тип запроса.</param>
+            /// <param name="RequestParameters">Дополнительные параметры.</param>
+            /// <param name="RequestBody">Тело для POST запроса.</param>
+            public T Exec<T>(Method RequestMethod, string RequestParameters = default, object RequestBody = null)
+            {
+                /// Разрешаем SSL соединение.
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                try
+                {
+                    var _client = new RestClient($"{Domain + (string.IsNullOrEmpty(RequestParameters) ? string.Empty : $"?hwid={RequestParameters}")}");
+                    var _request = new RestRequest(RequestMethod).AddHeader("Content-Type", "application/json");
+
+                    /// Для POST запроса добавляем тело запроса.
+                    if (RequestBody != null)
+                        _request.AddJsonBody(JsonConvert.SerializeObject(RequestBody));
+
+                    var response = _client.Execute(_request);
+                    var jresponse = JObject.Parse(response.Content);
+
+                    /// Приводим JSON ответ сервера к нужной структуре ответа.
+                    return JsonConvert.DeserializeObject<T>(jresponse["data"].ToString());
+                }
+                catch (Exception ex)
+                {
+                    aSystem.Messages.Show(ex.Message, aSystem.Messages.MessageTypes.Exceptions);
+                    throw;
+                }
+            }
+        }
+
         /// <summary>
         /// Работа с сайтом 2ip.ru
         /// НЕ ПРОВЕРЯЛОСЬ

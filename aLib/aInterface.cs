@@ -1,4 +1,5 @@
-﻿using System;
+﻿#region • Usings
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,7 @@ using MaterialSkin.Controls;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Windows.Forms;
+#endregion
 
 namespace aLib
 {
