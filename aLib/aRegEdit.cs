@@ -6,7 +6,7 @@ using System;
 
 #endregion
 
-namespace aLib
+namespace aLib.Utils
 {
     /// <summary>
     /// Работа с реестром.

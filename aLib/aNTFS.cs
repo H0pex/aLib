@@ -6,12 +6,14 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
+using aLib.WebKit;
+
 using Ionic.Zip;
 using Ionic.Zlib;
 
 #endregion
 
-namespace aLib
+namespace aLib.Utils
 {
     /// <summary>
     /// Работа с файловой системой.

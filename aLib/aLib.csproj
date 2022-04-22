@@ -93,7 +93,6 @@
     <Compile Include="aEncryptions.cs" />
     <Compile Include="aNTFS.cs" />
     <Compile Include="aRegEdit.cs" />
-    <Compile Include="aSpeech.cs" />
     <Compile Include="aSystem.cs" />
     <Compile Include="aValve.cs" />
     <Compile Include="aWeb.cs" />

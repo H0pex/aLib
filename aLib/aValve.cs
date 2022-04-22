@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 #endregion
 
-namespace aLib
+namespace aLib.aValve
 {
     /// <summary>
     /// Работа с разделами Valve.

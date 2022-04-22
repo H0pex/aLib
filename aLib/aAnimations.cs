@@ -5,10 +5,11 @@ using System;
 using System.Drawing;
 
 using MetroFramework.Animation;
+using aLib.Utils;
 
 #endregion
 
-namespace aLib
+namespace aLib.Windows.Interface
 {
     /// <summary>
     /// Работа с анимациями Windows Metro Style.

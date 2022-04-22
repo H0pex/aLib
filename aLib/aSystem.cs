@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 #endregion
 
-namespace aLib
+namespace aLib.Utils
 {
     /// <summary>
     /// Работа с ресурсами операционной системы.
@@ -164,16 +164,16 @@ namespace aLib
 
             #region Close
 
-            PictureBox Exit = new PictureBox()
-            {
-                Parent = Message,
-                BackColor = Color.Transparent,
-                Size = new Size(10, 10),
-                Location = new Point(306, 4),
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                Image = Properties.Resources.NExit
-            };
-            Exit.MouseClick += (object O, MouseEventArgs E) => { Message.Dispose(); NotifyCount--; };
+            //PictureBox Exit = new PictureBox()
+            //{
+            //    Parent = Message,
+            //    BackColor = Color.Transparent,
+            //    Size = new Size(10, 10),
+            //    Location = new Point(306, 4),
+            //    SizeMode = PictureBoxSizeMode.StretchImage,
+            //    Image = Properties.Resources.NExit
+            //};
+            //Exit.MouseClick += (object O, MouseEventArgs E) => { Message.Dispose(); NotifyCount--; };
 
             #endregion
 

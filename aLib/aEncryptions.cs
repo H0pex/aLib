@@ -11,7 +11,7 @@ using System.Linq;
 
 #endregion
 
-namespace aLib
+namespace aLib.Utils
 {
     /// <summary>
     /// Работа с шифрованием данных.

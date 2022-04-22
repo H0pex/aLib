@@ -13,7 +13,7 @@ using System.Reflection;
 using System.Windows.Forms;
 #endregion
 
-namespace aLib
+namespace aLib.Windows.Interface
 {
     /// <summary>
     /// Работа с интерфейсом пользователя

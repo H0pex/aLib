@@ -4,7 +4,7 @@ using System;
 
 #endregion
 
-namespace aLib
+namespace aLib.Utils
 {
     /// <summary>
     /// Работа с датой и временем.

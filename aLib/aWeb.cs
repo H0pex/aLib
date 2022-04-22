@@ -11,10 +11,11 @@ using System.Net.Cache;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using RestSharp; // рекомендуемая версия: 106.13.0
+using aLib.Utils;
 
 #endregion
 
-namespace aLib
+namespace aLib.WebKit
 {
     /// <summary>
     /// Работа с интернетом.
