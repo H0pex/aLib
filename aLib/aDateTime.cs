@@ -34,7 +34,7 @@ namespace aLib.Utils
             public Time(char Separator = '-') => this.Separator = Separator;
 
             /// <summary>
-            /// Возвращает текущее врменя формата HH.MM.SS.
+            /// Возвращает текущее врменя формата HH-MM-SS.
             /// </summary>
             public string Current
             {
@@ -91,7 +91,7 @@ namespace aLib.Utils
             public Data(char Separator = '-') => this.Separator = Separator;
 
             /// <summary>
-            /// Возвращает текущую дату формата DD.MM.YYYY.
+            /// Возвращает текущую дату формата DD-MM-YYYY.
             /// </summary>
             public string Current
             {
