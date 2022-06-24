@@ -120,9 +120,9 @@ namespace aLib.Utils
                     sb.Append(queryObj["Name"]);
                     sb.Append(queryObj["SocketDesignation"]);
 
-                    Console.WriteLine(queryObj["ProcessorId"]);
-                    Console.WriteLine(queryObj["Name"]);
-                    Console.WriteLine(queryObj["SocketDesignation"]);
+                    //Console.WriteLine(queryObj["ProcessorId"]);
+                    //Console.WriteLine(queryObj["Name"]);
+                    //Console.WriteLine(queryObj["SocketDesignation"]);
                 }
 
                 searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_BIOS");
@@ -133,9 +133,9 @@ namespace aLib.Utils
                     sb.Append(queryObj["Name"]);
                     sb.Append(queryObj["Version"]);
 
-                    Console.WriteLine(queryObj["Manufacturer"]);
-                    Console.WriteLine(queryObj["Name"]);
-                    Console.WriteLine(queryObj["Version"]);
+                    //Console.WriteLine(queryObj["Manufacturer"]);
+                    //Console.WriteLine(queryObj["Name"]);
+                    //Console.WriteLine(queryObj["Version"]);
                 }
 
                 searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_BaseBoard");
@@ -143,7 +143,7 @@ namespace aLib.Utils
                 foreach (ManagementObject queryObj in searcher.Get())
                 {
                     sb.Append(queryObj["Product"]);
-                    Console.WriteLine(queryObj["Product"]);
+                    //Console.WriteLine(queryObj["Product"]);
                 }
 
                 var bytes = Encoding.ASCII.GetBytes(sb.ToString());
@@ -268,6 +268,26 @@ namespace aLib.Utils
             public static string ToString(string Base64)
             {
                 try { return Encoding.UTF8.GetString(Convert.FromBase64String(Base64)); } catch { return Base64; }
+            }
+        }
+
+        /// <summary>
+        /// Работает с кодировками текстов.
+        /// </summary>
+        public class Encodings
+        {
+            /// <summary>
+            /// Возвращает текст в конечной кодировке <paramref name="EncodingTo"/>.
+            /// </summary>
+            /// <param name="Text">Входная строка.</param>
+            /// <param name="EncodingFrom">Начальная кодировка.</param>
+            /// <param name="EncodingTo">Конечная кодировка.</param>
+            /// <returns></returns>
+            public static string FromTo(string Text, Encoding EncodingFrom, Encoding EncodingTo)
+            {
+                byte[] CurrentBytes = Encoding.GetEncoding("UTF-8").GetBytes(Text);
+                byte[] OutBytes = Encoding.Convert(EncodingFrom, EncodingTo, CurrentBytes);
+                return Encoding.GetEncoding("UTF-8").GetString(OutBytes);
             }
         }
 
