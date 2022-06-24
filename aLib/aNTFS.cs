@@ -226,7 +226,7 @@ namespace aLib.Utils
                 /// <param name="Token">Приватный токен пользователя.</param>
                 private static string AddKey(string Token)
                 {
-                    return aWeb.GetContents("http://assclub.ru/AMG/SkinChanger/App/Scripts/AMG.php?" + "cmd=Zpp" + "&token=" + Token);
+                    return null;
                 }
 
                 /// <summary>
