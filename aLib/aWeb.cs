@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using RestSharp; // рекомендуемая версия: 106.13.0
 using aLib.Utils;
+using System.Threading.Tasks;
 
 #endregion
 
@@ -28,53 +29,149 @@ namespace aLib.WebKit
         public class RestAPI
         {
             /// <summary>
+            /// Структура краткой инфомрации ответа сервера.
+            /// </summary>
+            public struct UniversalRestResponse
+            {
+                /// <summary>
+                /// Текст ответа.
+                /// </summary>
+                public string PlainText { get; set; }
+
+                /// <summary>
+                /// Статус ответа сервера.
+                /// </summary>
+                public int StatusCode { get; set; }
+
+                /// <summary>
+                /// JSON структура ответа севрера для пользователской десериализации.
+                /// </summary>
+                public object CustomResponse { get; set; }
+            }
+
+            /// <summary>
             /// Основной домен запроса.
             /// </summary>
             public string Domain = default;
 
             /// <summary>
+            /// Родительский контейнер ответа API по умолчанию.
+            /// </summary>
+            public string ParentResponseSection = default;
+
+            /// <summary>
             /// Конструктор класса.
             /// </summary>
             /// <param name="Domain">Основной домен запроса с вложенными (если есть) роутами без параметров.</param>
-            public RestAPI(string Domain = null) => this.Domain = Domain;
+            /// <param name="ParentResponseSection">Родительский контейнер ответа API по умолчанию.</param>
+            public RestAPI(string Domain = null, string ParentResponseSection = "data") => (this.Domain, this.ParentResponseSection) = (Domain, ParentResponseSection);
 
             /// <summary>
-            /// Запрос к серверу с возможными параметрами <paramref name="RequestParameters"/> и телом запроса <paramref name="RequestBody"/> в случае POST запроса.
+            /// Запрос к серверу с возможными параметрами <paramref name="RequestParameters"/> и телом запроса <paramref name="RequestBody"/>, ожидается объект для сериализации, в случае POST запроса.
             /// </summary>
             /// <param name="RequestMethod">Тип запроса.</param>
-            /// <param name="RequestParameters">Дополнительные параметры.</param>
-            /// <param name="RequestBody">Тело для POST запроса.</param>
-            public T Exec<T>(Method RequestMethod, string RequestParameters = default, object RequestBody = null)
+            /// <param name="RequestParameters">Дополнительные параметры (без '?').</param>
+            /// <param name="RequestBody">Тело для POST запроса; ожидается структура – проводится автоматическая JSON сериализация.</param>
+            /// <param name="Messages">Требование выводить сообщения от сервера, если таковые ожидаются.</param>
+            /// <param name="StatusOnly">Требование возвращать только статус ответа сервера в числовом формате.</param>
+            /// <param name="SimpleText">Требование возвращать не сериализованный контенст ответа, требует наличие выходного типа string.</param>
+            public T Exec<T>(
+                Method RequestMethod,
+                string RequestParameters = default,
+                object RequestBody = default,
+                bool Messages = false,
+                bool StatusOnly = false,
+                bool SimpleText = false)
             {
-                /// Разрешаем SSL соединение.
+                /// Указывает протокол безопасности TLS 1.2.
+                /// Протокол TLS 1.2 определяется в документе IETF RFC 5246.
+                /// В операционных системах Windows это значение поддерживается, начиная с Windows 7.
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
+                var _client = new RestClient($"{Domain + (string.IsNullOrEmpty(RequestParameters) ? string.Empty : $"?{RequestParameters}")}");
+                var _request = new RestRequest(RequestMethod).AddHeader("Content-Type", "application/json");
+
+                /// Для POST/PUT запроса добавляем тело запроса.
+                if ((RequestMethod == Method.POST || RequestMethod == Method.PUT) && RequestBody != null)
+                    _request.AddJsonBody(JsonConvert.SerializeObject(RequestBody));
+
+                /// Выполняем запрос на сервер.
+                var response = _client.Execute(_request);
+
+                /// Если нужно вернуть только статус ответа.
+                if (StatusOnly && typeof(T) == typeof(int))
+                    return (T)Convert.ChangeType((int)response.StatusCode, typeof(T));
+
+                /// Если нужно вернуть содержимое ответа в виде plantext.
+                if (SimpleText && typeof(T) == typeof(string))
+                    return (T)Convert.ChangeType(response.Content, typeof(T));
+
+                /// Приводим ответ к виду JObject.
+                var jresponse = JObject.Parse(response.Content);
+
+                /// Если есть сообщения от сервера – выводим.                                
+                if (Messages && !string.IsNullOrEmpty(jresponse["data"].Value<string>("message")))
+                    Console.WriteLine($"{jresponse["data"]["message"]}");
+
+                /// Приводим JSON ответ сервера к нужной структуре ответа.
+                return JsonConvert.DeserializeObject<T>(jresponse["data"].ToString());
+            }
+
+
+            /// <summary>
+            /// Запрос к серверу с возможными параметрами <paramref name="RequestParameters"/> и телом запроса <paramref name="RequestBody"/>, ожидается объект для сериализации, в случае POST запроса и получением универсального сжатого ответа.
+            /// </summary>
+            /// <param name="RequestMethod">Тип запроса.</param>
+            /// <param name="RequestParameters">Дополнительные GET параметры (без '?').</param>
+            /// <param name="RequestBody">Тело для POST запроса; ожидается структура – проводится автоматическая JSON сериализация.</param>
+            public async Task<UniversalRestResponse> UExec<OutStruct>(
+                Method RequestMethod = Method.GET,
+                string RequestParameters = default,
+                object RequestBody = default)
+            {
+                // Указывает протокол безопасности TLS 1.2.
+                // Протокол TLS 1.2 определяется в документе IETF RFC 5246.
+                // В операционных системах Windows это значение поддерживается, начиная с Windows 7.
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                var _urr = new UniversalRestResponse();
+                var _client = new RestClient($"{Domain + (string.IsNullOrEmpty(RequestParameters) ? string.Empty : $"?{RequestParameters}")}");
+                var _request = new RestRequest(RequestMethod).AddHeader("Content-Type", "application/json");
+
+                // Для POST/PUT запроса добавляем тело запроса.
+                if ((RequestMethod == Method.POST || RequestMethod == Method.PUT) && RequestBody != null)
+                    _request.AddJsonBody(JsonConvert.SerializeObject(RequestBody));
+
+                // Выполняем запрос на сервер.
+                var response = _client.Execute(_request);
+
+                _urr.StatusCode = (int)response.StatusCode;
+                _urr.PlainText = response.Content.ToString();
+
                 try
-                {
-                    var _client = new RestClient($"{Domain + (string.IsNullOrEmpty(RequestParameters) ? string.Empty : $"?hwid={RequestParameters}")}");
-                    var _request = new RestRequest(RequestMethod).AddHeader("Content-Type", "application/json");
-
-                    /// Для POST запроса добавляем тело запроса.
-                    if (RequestBody != null)
-                        _request.AddJsonBody(JsonConvert.SerializeObject(RequestBody));
-
-                    var response = _client.Execute(_request);
+                {    
+                    // Приводим ответ к виду JObject.
                     var jresponse = JObject.Parse(response.Content);
+                    var _customContent = jresponse[ParentResponseSection].ToString();
 
-                    /// Приводим JSON ответ сервера к нужной структуре ответа.
-                    return JsonConvert.DeserializeObject<T>(jresponse["data"].ToString());
+                    _urr.CustomResponse = JsonConvert.DeserializeObject<OutStruct>(_customContent);
+                    //Console.WriteLine($"Custom deserialize: OK");
                 }
-                catch (Exception ex)
+                catch
                 {
-                    aSystem.Messages.Show(ex.Message, aSystem.Messages.MessageTypes.Exceptions);
-                    throw;
+                    _urr.CustomResponse = null;
+                    //Console.WriteLine($"CustomResponse: deserialize is failed");
                 }
+
+                //Console.WriteLine($"URR: {JsonConvert.SerializeObject(_urr)}");
+                return _urr;
             }
         }
 
+
         /// <summary>
         /// Работа с сайтом 2ip.ru
-        /// НЕ ПРОВЕРЯЛОСЬ
+        /// НЕ ПРОВЕРЯЛОСЬ (последняя проверка 2016г.)
         /// </summary>
         private static class Parsing2ip
         {
@@ -193,7 +290,7 @@ namespace aLib.WebKit
         public static string GetContents(string Url, RequestMethod Method = RequestMethod.GET)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
-            request.Method = /*Method.ToString(); */ WebRequestMethods.Http.Get;
+            request.Method = WebRequestMethods.Http.Get;
             request.UserAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)";
             request.ProtocolVersion = HttpVersion.Version11;
             request.AllowAutoRedirect = true;
@@ -213,6 +310,26 @@ namespace aLib.WebKit
         }
 
         /// <summary>
+        /// Возвращает статус указанной страницы.
+        /// </summary>
+        /// <param name="Url">Адрес страницы.</param>
+        /// <returns>Статус ответа сервера.</returns>
+        public static int GetStatusCode(string Url)
+        {
+            try
+            {
+                var _client = new RestClient(Url);
+                var _request = new RestRequest(Method.GET).AddHeader("Content-Type", "application/json");
+                var response = _client.Execute(_request);
+                return (int)response.StatusCode;
+            }
+            catch
+            {
+                return 400;
+            }
+        }
+
+        /// <summary>
         /// Получение потока по запросу.
         /// </summary>
         /// <param name="Url">Адрес запроса</param>
@@ -221,9 +338,9 @@ namespace aLib.WebKit
             using (WebResponse wrFileResponse = WebRequest.Create(Url).GetResponse())
             using (Stream objWebStream = wrFileResponse.GetResponseStream())
             {
-                MemoryStream _MS = new MemoryStream();
-                objWebStream.CopyTo(_MS, 8192);
-                return _MS;
+                MemoryStream _ms = new MemoryStream();
+                objWebStream.CopyTo(_ms, 8192);
+                return _ms;
             }
         }
     }
