@@ -6,6 +6,7 @@ using System.Drawing;
 
 using MetroFramework.Animation;
 using aLib.Utils;
+using MaterialSkin.Controls;
 
 #endregion
 
@@ -76,8 +77,8 @@ namespace aLib.Windows.Interface
                 /// <param name="Duration">Скорость изменения прозрачности.</param>
                 public static void Decrement(Form Form, double Value, int Duration)
                 {
-                    System.Windows.Forms.Timer T = new System.Windows.Forms.Timer() { Interval = (int)(Duration * 0.5) };
-                    T.Tick += (object O, EventArgs EA) =>
+                    Timer T = new Timer() { Interval = Duration };
+                    T.Tick += (O, EA) =>
                     {
                         if (!(Form.Opacity != Value)) T.Stop();
                         else Form.Opacity -= 0.01;
@@ -186,16 +187,23 @@ namespace aLib.Windows.Interface
             /// <summary>
             /// Плавное закрытие формы.
             /// </summary>
-            /// <param name="Form">Закрываемая форма.</param>
+            /// <param name="senderClass">Закрываемая форма. Поддержваются классы форм Form и MaterialForm.</param>
             /// <param name="Duration">Скорость закрытия.</param>
-            public static void Close(Form Form, int Duration)
+            public static void Close(object senderClass, int Duration)
             {
-                System.Windows.Forms.Timer Event = new System.Windows.Forms.Timer { Interval = Duration };
-                Event.Tick += delegate (object sender, EventArgs e)
+                var isMaterialForm = senderClass is MaterialForm;
+                
+                Timer Event = new Timer { Interval = Duration };
+                Event.Tick += (o, e) =>
                 {
-                    if (Form.Opacity != 1) { Form.Opacity -= 0.1; }
-                    else { Event.Stop(); Form.Close(); }
-                }; Event.Start();
+                    if ((isMaterialForm ? (MaterialForm)senderClass : (Form)senderClass).Opacity == 0)
+                    {
+                        Event.Stop();
+                        (isMaterialForm ? (MaterialForm)senderClass : (Form)senderClass).Close();
+                    }
+                    (isMaterialForm ? (MaterialForm)senderClass : (Form)senderClass).Opacity -= 0.1;
+                };
+                Event.Start();
             }
 
             /// <summary>
